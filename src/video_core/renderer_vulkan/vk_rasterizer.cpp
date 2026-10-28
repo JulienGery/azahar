@@ -759,15 +759,23 @@ void RasterizerVulkan::SyncUtilityTextures(const Framebuffer* framebuffer) {
         const u32 shadow_texture_unit = regs.lighting.config0.shadow_selector.Value();
         const auto shadow_texture = regs.texturing.GetTextures()[shadow_texture_unit];
         Surface& shadow_surface = res_cache.GetTextureSurface(shadow_texture);
-        update_queue.AddStorageImage(utility_set, 0, shadow_surface.StorageView());
-    } else {
-        if (instance.IsNullDescriptorSupported()) {
-            update_queue.AddStorageImage(utility_set, 0, vk::ImageView{});
+        if (shadow_surface.SupportsStorage()) {
+            update_queue.AddStorageImage(utility_set, 0, shadow_surface.StorageView());
         } else {
-            Surface& null_surface = res_cache.GetSurface(VideoCore::NULL_SURFACE_ID);
-            update_queue.AddStorageImage(utility_set, 0, null_surface.StorageView());
+            LOG_ERROR(Render_Vulkan, "Shadow texture has no storage support, ignoring");
+            update_queue.AddStorageImage(utility_set, 0, GetNullStorageView());
         }
+    } else {
+        update_queue.AddStorageImage(utility_set, 0, GetNullStorageView());
     }
+}
+
+vk::ImageView RasterizerVulkan::GetNullStorageView() {
+    if (instance.IsNullDescriptorSupported()) {
+        return vk::ImageView{};
+    }
+    Surface& null_surface = res_cache.GetSurface(VideoCore::NULL_SURFACE_ID);
+    return null_surface.StorageView();
 }
 
 void RasterizerVulkan::BindShadowCube(const Pica::TexturingRegs::FullTextureConfig& texture,

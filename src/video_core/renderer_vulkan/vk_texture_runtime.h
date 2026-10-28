@@ -242,8 +242,20 @@ public:
 
     /// Returns the R32 image view used for atomic load/store.
     vk::ImageView StorageView() noexcept {
+        if (!SupportsStorage()) {
+            // The game uses a surface of an unsupported format as a shadow texture. Avoid
+            // crashing and fall back to a regular sampled view.
+            LOG_ERROR(Render_Vulkan, "Surface format {} has no storage support, shadow ignored",
+                      vk::to_string(traits.native));
+            return ImageView(ViewType::Sample);
+        }
         is_storage = true;
         return ImageView(ViewType::Storage);
+    }
+
+    /// Returns true if the surface image can be accessed through an R32 storage view.
+    bool SupportsStorage() const noexcept {
+        return traits.storage_support && traits.native == vk::Format::eR8G8B8A8Unorm;
     }
 
     /// Uploads pixel data in staging to a rectangle region of the surface texture
