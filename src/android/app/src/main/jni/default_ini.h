@@ -37,6 +37,9 @@ constexpr std::array android_config_omitted_keys = {
     Settings::Keys::enable_exception_handler, // Does nothing as the error is ignored
     Settings::Keys::use_gdbstub,              // GDB functionality disabled by deafult on Android
     Settings::Keys::gdbstub_port,
+    Settings::Keys::battery_state_source, // No UI on Android, the default is used
+    Settings::Keys::battery_charging,
+    Settings::Keys::battery_level,
 };
 
 // clang-format off
